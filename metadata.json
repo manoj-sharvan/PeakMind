@@ -1,0 +1,6 @@
+{
+  "name": "PeakMind",
+  "description": "PeakMind - 6-Month Home Fitness, Pelvic Health, Sexual Wellness and Heat Recovery Program",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

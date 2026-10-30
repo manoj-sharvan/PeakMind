@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Pelvic Vitality & Core Strength Emblem -->
+    <!-- Outer energy arc - Electric Lime -->
+    <path
+        android:fillColor="#CCFF00"
+        android:pathData="M54,28 C64,28 72,33 76,41 C73,43 69,41 64,39 C58,37 50,37 44,39 C39,41 35,43 32,41 C36,33 44,28 54,28 Z" />
+    
+    <!-- Central Core Wings / Pelvic Arch -->
+    <path
+        android:fillColor="#06B6D4"
+        android:pathData="M31,45 C35,43 45,43 54,49 C63,43 73,43 77,45 C80,56 75,70 54,82 C33,70 28,56 31,45 Z" />
+    
+    <!-- Inner Core Heart & Pulse Anchor -->
+    <path
+        android:fillColor="#CCFF00"
+        android:pathData="M54,54 C58,49 66,51 66,57 C66,63 58,69 54,73 C50,69 42,63 42,57 C42,51 50,49 54,54 Z" />
+
+    <!-- Core Vitality Light Spark -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,57 L55.5,60.5 L59,62 L55.5,63.5 L54,67 L52.5,63.5 L49,62 L52.5,60.5 Z" />
+</vector>
