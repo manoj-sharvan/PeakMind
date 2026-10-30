@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 data class UserProfile(
-    val name: String = "Ravi",
+    val name: String = "Manoj",
     val age: Int = 29,
     val heightCm: Int = 167,
     val weightKg: Float = 88.0f,

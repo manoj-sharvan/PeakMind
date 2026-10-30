@@ -23,7 +23,7 @@ class ExampleUnitTest {
     @Test
     fun userProfile_defaultValuesAndUpdates() {
         val profile = UserProfileManager.userProfile.value
-        assertEquals("Ravi", profile.name)
+        assertEquals("Manoj", profile.name)
         assertEquals(29, profile.age)
         assertEquals(167, profile.heightCm)
         assertEquals(88f, profile.weightKg)
