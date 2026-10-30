@@ -62,7 +62,13 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -76,7 +82,8 @@ import com.example.ui.theme.PeakMindSpacing
 
 /**
  * 1. PeakMindPrimaryButton
- * High-contrast Electric Lime pill button with responsive spring press feedback.
+ * High-contrast Electric Lime button with subtle gradient, tactile spring press feedback,
+ * 18-20dp rounded corners, and full dark/light mode accessibility (WCAG AAA compliant text contrast).
  */
 @Composable
 fun PeakMindPrimaryButton(
@@ -85,46 +92,104 @@ fun PeakMindPrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     leadingIcon: ImageVector? = null,
+    trailingIcon: ImageVector? = null,
+    shape: Shape = RoundedCornerShape(20.dp),
     testTag: String = "primary_button"
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.97f else 1.0f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
+        animationSpec = spring(dampingRatio = 0.65f, stiffness = 400f),
         label = "btnScale"
     )
 
-    Button(
+    val isDark = isSystemInDarkTheme() || MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    // Electric lime subtle gradient
+    val limeBrush = if (enabled) {
+        Brush.horizontalGradient(
+            colors = listOf(
+                Color(0xFFD4FF26), // Lighter electric lime
+                Color(0xFFCCFF00), // Pure electric lime
+                Color(0xFFB8F000)  // Deep electric lime
+            )
+        )
+    } else {
+        Brush.horizontalGradient(
+            colors = listOf(
+                Color(0xFFCCFF00).copy(alpha = 0.35f),
+                Color(0xFFB8F000).copy(alpha = 0.35f)
+            )
+        )
+    }
+
+    val contentColor = if (enabled) {
+        Color(0xFF0F1115) // Deep charcoal dark text -> 13:1 contrast ratio against #CCFF00
+    } else {
+        Color(0xFF0F1115).copy(alpha = 0.45f)
+    }
+
+    val borderStroke = if (enabled && isDark) {
+        BorderStroke(1.dp, Color(0x3306B6D4)) // Subtle cyan edge glow
+    } else if (enabled) {
+        BorderStroke(1.dp, Color(0x22000000))
+    } else null
+
+    Surface(
         onClick = onClick,
         enabled = enabled,
+        shape = shape,
         interactionSource = interactionSource,
-        shape = PeakMindShapes.button,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = PeakMindLime,
-            contentColor = PeakMindLimeOn,
-            disabledContainerColor = PeakMindLime.copy(alpha = 0.35f),
-            disabledContentColor = PeakMindLimeOn.copy(alpha = 0.5f)
-        ),
+        border = borderStroke,
+        color = Color.Transparent,
         modifier = modifier
             .fillMaxWidth()
-            .height(PeakMindSpacing.buttonHeight)
+            .height(52.dp)
             .scale(scale)
+            .semantics {
+                this.role = Role.Button
+                this.contentDescription = text
+            }
             .testTag(testTag)
     ) {
-        if (leadingIcon != null) {
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(PeakMindSpacing.xs))
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(limeBrush),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            ) {
+                if (leadingIcon != null) {
+                    Icon(
+                        imageVector = leadingIcon,
+                        contentDescription = null,
+                        tint = contentColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor
+                )
+                if (trailingIcon != null) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = trailingIcon,
+                        contentDescription = null,
+                        tint = contentColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
         }
-        Text(
-            text = text,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
     }
 }
 
@@ -188,7 +253,8 @@ fun PeakMindSecondaryButton(
 
 /**
  * 3. PeakMindWorkoutCard
- * Today's Workout hero card with gradient depth, duration chip, and integrated action button.
+ * Wireframe-styled hero workout card with 20dp rounded corners, subtle multi-stop gradients,
+ * electric lime and cyan accents, tactile press animation, and full dark/light theme accessibility.
  */
 @Composable
 fun PeakMindWorkoutCard(
@@ -197,6 +263,8 @@ fun PeakMindWorkoutCard(
     subtitle: String = "Today's Workout",
     onStartWorkout: () -> Unit,
     modifier: Modifier = Modifier,
+    level: String? = null,
+    thumbnailContent: (@Composable () -> Unit)? = null,
     testTag: String = "today_workout_card"
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -204,76 +272,181 @@ fun PeakMindWorkoutCard(
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.985f else 1.0f,
         animationSpec = spring(dampingRatio = 0.7f, stiffness = 350f),
-        label = "cardScale"
+        label = "workoutCardScale"
     )
+
+    val isDark = isSystemInDarkTheme() || MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    // Subtle multi-stop gradient for card surface
+    val cardBackgroundBrush = if (isDark) {
+        Brush.linearGradient(
+            colors = listOf(
+                Color(0xFF1E2638), // Subtle navy/charcoal depth
+                Color(0xFF161A25),
+                Color(0xFF10131B)  // Seamless foundation blend
+            )
+        )
+    } else {
+        Brush.linearGradient(
+            colors = listOf(
+                Color(0xFFFFFFFF),
+                Color(0xFFF8FAFC),
+                Color(0xFFF1F5F9)
+            )
+        )
+    }
+
+    // Cyan and electric lime glow border
+    val cardBorderBrush = if (isDark) {
+        Brush.horizontalGradient(
+            colors = listOf(
+                Color(0x6606B6D4), // Cyan glow
+                Color(0x33CCFF00), // Lime accent glow
+                Color(0x2606B6D4)  // Cyan edge
+            )
+        )
+    } else {
+        Brush.horizontalGradient(
+            colors = listOf(
+                Color(0x400284C7),
+                Color(0x2665A30D),
+                Color(0x260284C7)
+            )
+        )
+    }
+
+    val cardShape = RoundedCornerShape(20.dp)
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .scale(scale)
-            .clickable(interactionSource = interactionSource, indication = null) { onStartWorkout() }
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClickLabel = "Start $title"
+            ) { onStartWorkout() }
+            .semantics {
+                this.role = Role.Button
+                this.contentDescription = "$subtitle: $title, Duration: $duration. Tap to start workout."
+            }
             .testTag(testTag),
-        shape = PeakMindShapes.card,
+        shape = cardShape,
         color = Color.Transparent,
-        border = BorderStroke(1.dp, PeakMindGradients.cyanGlowBorder)
+        border = BorderStroke(1.dp, cardBorderBrush),
+        shadowElevation = if (isDark) 0.dp else 2.dp
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(PeakMindGradients.heroWorkout)
-                .padding(PeakMindSpacing.lg)
+                .background(cardBackgroundBrush)
+                .padding(20.dp)
         ) {
             Column {
+                // Header row: Subtitle + Duration / Level Badges
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Electric Lime indicator pill
+                        Box(
+                            modifier = Modifier
+                                .size(width = 8.dp, height = 8.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFCCFF00))
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Cyan duration pill badge
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
                             .background(
-                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
-                                RoundedCornerShape(8.dp)
+                                if (isDark) Color(0x2606B6D4) else Color(0x1A0284C7)
                             )
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .border(
+                                width = 0.5.dp,
+                                color = if (isDark) Color(0x4006B6D4) else Color(0x330284C7),
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Timer,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.size(15.dp)
+                            tint = if (isDark) Color(0xFF06B6D4) else Color(0xFF0284C7),
+                            modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = duration,
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.secondary,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDark) Color(0xFF06B6D4) else Color(0xFF0284C7)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                // Title & optional Level
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (level != null) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = level,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    // Optional thumbnail or illustration slot
+                    if (thumbnailContent != null) {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(
+                                    if (isDark) Color(0x331E293B) else Color(0x1A000000)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            thumbnailContent()
+                        }
+                    }
+                }
 
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Integrated Primary Action Button with Electric Lime styling
                 PeakMindPrimaryButton(
                     text = "Start Workout",
                     onClick = onStartWorkout,
+                    leadingIcon = Icons.AutoMirrored.Filled.ArrowForward,
                     modifier = Modifier.height(48.dp),
+                    shape = RoundedCornerShape(16.dp),
                     testTag = "start_workout_inner_btn"
                 )
             }
